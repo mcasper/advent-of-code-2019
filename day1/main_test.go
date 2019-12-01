@@ -23,3 +23,23 @@ func TestExecuteExample(t *testing.T) {
 		t.Errorf("Expected 34237, got %v\n", result)
 	}
 }
+
+func TestExecute2Example(t *testing.T) {
+	payloads := []int{1969}
+	result := Execute2(payloads)
+	if result != 966 {
+		t.Errorf("Expected 966, got %v\n", result)
+	}
+
+	payloads = []int{100756}
+	result = Execute2(payloads)
+	if result != 50346 {
+		t.Errorf("Expected 50346, got %v\n", result)
+	}
+
+	payloads = []int{1969, 100756}
+	result = Execute2(payloads)
+	if result != 51312 {
+		t.Errorf("Expected 51312, got %v\n", result)
+	}
+}

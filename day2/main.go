@@ -26,12 +26,18 @@ func main() {
 		ints = append(ints, integer)
 	}
 
-	// Special instructions
-	ints[1] = 12
-	ints[2] = 2
+	ints1 := ints
+	ints2 := append(ints1[:0:0], ints1...)
 
-	result := Execute(ints)
+	// Special instructions
+	ints1[1] = 12
+	ints1[2] = 2
+
+	result := Execute(ints1)
 	fmt.Printf("Part 1 result is: %v\n", result)
+
+	result = Execute2(ints2)
+	fmt.Printf("Part 2 result is: %v\n", result)
 }
 
 func Execute(ints []int) int {
@@ -60,4 +66,25 @@ func Execute(ints []int) int {
 	}
 
 	return ints[0]
+}
+
+func Execute2(ints []int) int {
+	expectation := 19690720
+	var noun_result int
+	var verb_result int
+
+	for noun := 0; noun <= 99; noun++ {
+		for verb := 0; verb <= 99; verb++ {
+			ints_copy := append(ints[:0:0], ints...)
+			ints_copy[1] = noun
+			ints_copy[2] = verb
+			result := Execute(ints_copy)
+			if result == expectation {
+				noun_result = noun
+				verb_result = verb
+			}
+		}
+	}
+
+	return (100 * noun_result) + verb_result
 }

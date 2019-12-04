@@ -26,6 +26,9 @@ func main() {
 
 	result := Execute(wire1, wire2)
 	fmt.Printf("Part 1 result: %v\n", result)
+
+	result = Execute2(wire1, wire2)
+	fmt.Printf("Part 2 result: %v\n", result)
 }
 
 func Execute(wire1 []string, wire2 []string) int {
@@ -42,6 +45,37 @@ func Execute(wire1 []string, wire2 []string) int {
 	}
 
 	return minDistance
+}
+
+func Execute2(wire1 []string, wire2 []string) int {
+	wire1Coords := instructionsToCoords(wire1)
+	wire2Coords := instructionsToCoords(wire2)
+	intersections := extractIntersections(wire1Coords, wire2Coords)
+
+	minStepLength := 10000000000
+	for _, coord := range intersections {
+		stepLength := combinedStepLength(wire1Coords, wire2Coords, coord)
+		if minStepLength > stepLength {
+			minStepLength = stepLength
+		}
+	}
+
+	return minStepLength
+}
+
+func combinedStepLength(wire1Coords []Coord, wire2Coords []Coord, coord Coord) int {
+	return stepLength(wire1Coords, coord) + stepLength(wire2Coords, coord)
+}
+
+func stepLength(coords []Coord, coord Coord) int {
+	var result int
+	for i, coord2 := range coords {
+		if coord.x == coord2.x && coord.y == coord2.y {
+			result = i + 1
+			break
+		}
+	}
+	return result
 }
 
 func coordinateDistance(coord1 Coord, coord2 Coord) int {

@@ -42,7 +42,7 @@ func validPassword(password int) bool {
 			break
 		}
 
-		if c == chars[i+1] {
+		if c == charAt(chars, i+1) && c != charAt(chars, i-1) && c != charAt(chars, i+2) {
 			hasIdenticalPair = true
 		}
 
@@ -52,4 +52,11 @@ func validPassword(password int) bool {
 	}
 
 	return hasIdenticalPair && digitsNeverDecrease
+}
+
+func charAt(chars []string, index int) string {
+	if index >= 0 && index < len(chars) {
+		return chars[index]
+	}
+	return ""
 }

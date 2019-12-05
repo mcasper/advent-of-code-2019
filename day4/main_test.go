@@ -5,15 +5,8 @@ import (
 )
 
 func TestValidPassword(t *testing.T) {
-	password := 111111
+	password := 223450
 	result := validPassword(password)
-
-	if !result {
-		t.Errorf("Expected %v to be a valid password\n", password)
-	}
-
-	password = 223450
-	result = validPassword(password)
 
 	if result {
 		t.Errorf("Expected %v to not be a valid password\n", password)
@@ -26,17 +19,24 @@ func TestValidPassword(t *testing.T) {
 		t.Errorf("Expected %v to not be a valid password\n", password)
 	}
 
-	password = 111123
+	password = 122345
 	result = validPassword(password)
 
 	if !result {
 		t.Errorf("Expected %v to be a valid password\n", password)
 	}
 
-	password = 122345
+	password = 112233
 	result = validPassword(password)
 
 	if !result {
 		t.Errorf("Expected %v to be a valid password\n", password)
+	}
+
+	password = 123444
+	result = validPassword(password)
+
+	if result {
+		t.Errorf("Expected %v to not be a valid password\n", password)
 	}
 }

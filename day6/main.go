@@ -17,22 +17,13 @@ func main() {
 
 	result := Execute(orbits)
 	fmt.Printf("Part 1 result: %v\n", result)
+
+	result = Execute2(orbits)
+	fmt.Printf("Part 2 result: %v\n", result)
 }
 
 func Execute(orbits []string) int {
-	orbitTree := map[string][]string{}
-
-	for _, orbit := range orbits {
-		split := strings.Split(orbit, ")")
-		left := split[0]
-		right := split[1]
-
-		if orbitTree[left] != nil {
-			orbitTree[left] = append(orbitTree[left], right)
-		} else {
-			orbitTree[left] = []string{right}
-		}
-	}
+	orbitTree := orbitsToTree(orbits)
 
 	total := 0
 	depth := 1
@@ -58,4 +49,76 @@ func Execute(orbits []string) int {
 	}
 
 	return total
+}
+
+func Execute2(orbits []string) int {
+	orbitTree := orbitsToTree(orbits)
+	youPath := findPath(orbitTree, "YOU")
+	sanPath := findPath(orbitTree, "SAN")
+
+	var youIndex int
+	var intersection string
+	for i, node := range youPath {
+		if contains(sanPath, node) {
+			intersection = node
+			youIndex = i
+			break
+		}
+	}
+
+	var sanIndex int
+	for i, node := range sanPath {
+		if node == intersection {
+			sanIndex = i
+		}
+	}
+
+	return sanIndex + youIndex
+}
+
+func orbitsToTree(orbits []string) map[string][]string {
+	orbitTree := map[string][]string{}
+
+	for _, orbit := range orbits {
+		split := strings.Split(orbit, ")")
+		left := split[0]
+		right := split[1]
+
+		if orbitTree[left] != nil {
+			orbitTree[left] = append(orbitTree[left], right)
+		} else {
+			orbitTree[left] = []string{right}
+		}
+	}
+
+	return orbitTree
+}
+
+func findPath(orbitTree map[string][]string, node string) []string {
+	path := []string{}
+	currentNode := node
+
+	for {
+		for k, v := range orbitTree {
+			if contains(v, currentNode) {
+				path = append(path, k)
+				currentNode = k
+			}
+		}
+
+		if currentNode == "COM" {
+			break
+		}
+	}
+
+	return path
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

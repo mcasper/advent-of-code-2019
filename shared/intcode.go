@@ -35,6 +35,14 @@ func (c *Computer) Execute() int {
 			c.Input()
 		} else if instruction.opcode == 4 {
 			c.Output(instruction)
+		} else if instruction.opcode == 5 {
+			c.JumpIfTrue(instruction)
+		} else if instruction.opcode == 6 {
+			c.JumpIfFalse(instruction)
+		} else if instruction.opcode == 7 {
+			c.LessThan(instruction)
+		} else if instruction.opcode == 8 {
+			c.Equals(instruction)
 		} else {
 			log.Fatalf("Don't know what to do with opcode %v\n", instruction.opcode)
 		}
@@ -89,6 +97,56 @@ func (c *Computer) Output(instruction Instruction) {
 	fmt.Printf("Output: %v\n", value)
 
 	c.Position += 2
+}
+
+func (c *Computer) JumpIfTrue(instruction Instruction) {
+	val1 := c.findValue(instruction, c.Inputs[c.Position+1], 0)
+	val2 := c.findValue(instruction, c.Inputs[c.Position+2], 1)
+
+	if val1 != 0 {
+		c.Position = val2
+	} else {
+		c.Position += 3
+	}
+}
+
+func (c *Computer) JumpIfFalse(instruction Instruction) {
+	val1 := c.findValue(instruction, c.Inputs[c.Position+1], 0)
+	val2 := c.findValue(instruction, c.Inputs[c.Position+2], 1)
+
+	if val1 == 0 {
+		c.Position = val2
+	} else {
+		c.Position += 3
+	}
+}
+
+func (c *Computer) LessThan(instruction Instruction) {
+	val1 := c.findValue(instruction, c.Inputs[c.Position+1], 0)
+	val2 := c.findValue(instruction, c.Inputs[c.Position+2], 1)
+	dest := c.Inputs[c.Position+3]
+
+	if val1 < val2 {
+		c.Inputs[dest] = 1
+	} else {
+		c.Inputs[dest] = 0
+	}
+
+	c.Position += 4
+}
+
+func (c *Computer) Equals(instruction Instruction) {
+	val1 := c.findValue(instruction, c.Inputs[c.Position+1], 0)
+	val2 := c.findValue(instruction, c.Inputs[c.Position+2], 1)
+	dest := c.Inputs[c.Position+3]
+
+	if val1 == val2 {
+		c.Inputs[dest] = 1
+	} else {
+		c.Inputs[dest] = 0
+	}
+
+	c.Position += 4
 }
 
 func (c *Computer) findValue(instruction Instruction, parameter int, parameterIndex int) int {

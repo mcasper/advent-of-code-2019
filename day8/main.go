@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -26,6 +30,18 @@ func NewLayer(width, height, index int) Layer {
 		rows,
 		index,
 	}
+}
+
+func (l *Layer) PixelAt(index int) int {
+	var flatPixels []int
+
+	for _, row := range l.rows {
+		for _, layerPixel := range row {
+			flatPixels = append(flatPixels, layerPixel)
+		}
+	}
+
+	return flatPixels[index]
 }
 
 func (l *Layer) AddPixel(pixel int) {
@@ -87,6 +103,9 @@ func main() {
 
 	result := Execute(ints)
 	fmt.Printf("Part 1 result: %v\n", result)
+
+	Execute2(ints)
+	fmt.Println("Open up ./result.png")
 }
 
 func Execute(ints []int) int {
@@ -120,4 +139,49 @@ func Execute(ints []int) int {
 	}
 
 	return fewestZerosLayer.PixelCount(1) * fewestZerosLayer.PixelCount(2)
+}
+
+func Execute2(ints []int) {
+	width := 25
+	height := 6
+
+	if len(ints)%(width*height) != 0 {
+		log.Fatal("Don't have a complete set of layers")
+	}
+
+	layers := []Layer{}
+	layer := NewLayer(width, height, 0)
+
+	for i, pixel := range ints {
+		layer.AddPixel(pixel)
+		if layer.Full() {
+			layers = append(layers, layer)
+			layer = NewLayer(width, height, i+1)
+		}
+	}
+
+	upLeft := image.Point{0, 0}
+	lowRight := image.Point{width, height}
+
+	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
+
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			for _, layer := range layers {
+				pixel := layer.PixelAt(x + (width * y))
+				if pixel == 2 {
+					continue
+				} else if pixel == 1 {
+					img.Set(x, y, color.White)
+					break
+				} else {
+					img.Set(x, y, color.Black)
+					break
+				}
+			}
+		}
+	}
+
+	f, _ := os.Create("result.png")
+	png.Encode(f, img)
 }

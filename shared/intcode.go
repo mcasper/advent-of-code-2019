@@ -3,15 +3,17 @@ package shared
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 )
 
 type Computer struct {
-	Inputs   []int
-	Position int
+	Inputs       []int
+	Position     int
+	InputStream  io.Reader
+	OutputStream io.Writer
 }
 
 type Instruction struct {
@@ -72,21 +74,22 @@ func (c *Computer) Multiply(instruction Instruction) {
 func (c *Computer) Input() {
 	dest := c.Inputs[c.Position+1]
 
-	fmt.Print("Waiting for input: ")
-	reader := bufio.NewReader(os.Stdin)
+	// fmt.Print("Waiting for input: ")
+	reader := bufio.NewReader(c.InputStream)
 	stringInput, err := reader.ReadString('\n')
 	if err != nil {
 		log.Fatal(err)
 	}
 	stringInput = strings.TrimSuffix(stringInput, "\n")
-	if len(stringInput) > 1 {
-		log.Fatal("Too much input")
-	}
+	c.InputStream = reader
 
 	input, err := strconv.Atoi(stringInput)
 	if err != nil {
+		fmt.Println("Error parsing input")
 		log.Fatal(err)
 	}
+
+	// fmt.Printf("Got input %v\n", input)
 
 	c.Inputs[dest] = input
 	c.Position += 2
@@ -94,7 +97,10 @@ func (c *Computer) Input() {
 
 func (c *Computer) Output(instruction Instruction) {
 	value := c.findValue(instruction, c.Inputs[c.Position+1], 0)
-	fmt.Printf("Output: %v\n", value)
+	_, err := io.WriteString(c.OutputStream, fmt.Sprintf("%v\n", strconv.Itoa(value)))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	c.Position += 2
 }

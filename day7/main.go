@@ -31,20 +31,20 @@ func main() {
 
 	largestOutput := 0
 
-	for phase1 := 0; phase1 < 5; phase1++ {
-		for phase2 := 0; phase2 < 5; phase2++ {
+	for phase1 := 5; phase1 < 10; phase1++ {
+		for phase2 := 5; phase2 < 10; phase2++ {
 			if phase1 == phase2 {
 				continue
 			}
-			for phase3 := 0; phase3 < 5; phase3++ {
+			for phase3 := 5; phase3 < 10; phase3++ {
 				if contains([]int{phase1, phase2}, phase3) {
 					continue
 				}
-				for phase4 := 0; phase4 < 5; phase4++ {
+				for phase4 := 5; phase4 < 10; phase4++ {
 					if contains([]int{phase1, phase2, phase3}, phase4) {
 						continue
 					}
-					for phase5 := 0; phase5 < 5; phase5++ {
+					for phase5 := 5; phase5 < 10; phase5++ {
 						if contains([]int{phase1, phase2, phase3, phase4}, phase5) {
 							continue
 						}
@@ -69,15 +69,12 @@ func main() {
 						var computer5InputStream bytes.Buffer
 						computer5InputStream.WriteString(fmt.Sprintf("%v\n", phase5))
 
-						fmt.Printf("%v%v%v%v%v\n", phase1, phase2, phase3, phase4, phase5)
-
 						computer1 := shared.Computer{
 							Inputs:       phase1Inputs,
 							Position:     0,
 							InputStream:  &computer1InputStream,
 							OutputStream: &computer2InputStream,
 						}
-						computer1.Execute()
 
 						computer2 := shared.Computer{
 							Inputs:       phase2Inputs,
@@ -85,7 +82,6 @@ func main() {
 							InputStream:  &computer2InputStream,
 							OutputStream: &computer3InputStream,
 						}
-						computer2.Execute()
 
 						computer3 := shared.Computer{
 							Inputs:       phase3Inputs,
@@ -93,7 +89,6 @@ func main() {
 							InputStream:  &computer3InputStream,
 							OutputStream: &computer4InputStream,
 						}
-						computer3.Execute()
 
 						computer4 := shared.Computer{
 							Inputs:       phase4Inputs,
@@ -101,19 +96,37 @@ func main() {
 							InputStream:  &computer4InputStream,
 							OutputStream: &computer5InputStream,
 						}
-						computer4.Execute()
-
-						var resultBuffer bytes.Buffer
 
 						computer5 := shared.Computer{
 							Inputs:       phase5Inputs,
 							Position:     0,
 							InputStream:  &computer5InputStream,
-							OutputStream: &resultBuffer,
+							OutputStream: &computer1InputStream,
 						}
-						computer5.Execute()
 
-						result, err := strconv.Atoi(strings.TrimSuffix(resultBuffer.String(), "\n"))
+						for {
+							if computer1.Execute() == 99 {
+								break
+							}
+
+							if computer2.Execute() == 99 {
+								break
+							}
+
+							if computer3.Execute() == 99 {
+								break
+							}
+
+							if computer4.Execute() == 99 {
+								break
+							}
+
+							if computer5.Execute() == 99 {
+								break
+							}
+						}
+
+						result, err := strconv.Atoi(strings.TrimSuffix(computer1InputStream.String(), "\n"))
 						if err != nil {
 							log.Fatal(err)
 						}

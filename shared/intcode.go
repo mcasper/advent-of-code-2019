@@ -26,7 +26,7 @@ func (c *Computer) Execute() int {
 		instruction := intToInstruction(c.Inputs[c.Position])
 
 		if instruction.opcode == 99 {
-			break
+			return 99
 		}
 
 		if instruction.opcode == 1 {
@@ -37,6 +37,7 @@ func (c *Computer) Execute() int {
 			c.Input()
 		} else if instruction.opcode == 4 {
 			c.Output(instruction)
+			return 0
 		} else if instruction.opcode == 5 {
 			c.JumpIfTrue(instruction)
 		} else if instruction.opcode == 6 {
@@ -97,6 +98,7 @@ func (c *Computer) Input() {
 
 func (c *Computer) Output(instruction Instruction) {
 	value := c.findValue(instruction, c.Inputs[c.Position+1], 0)
+	// fmt.Printf("Outputing %v\n", value)
 	_, err := io.WriteString(c.OutputStream, fmt.Sprintf("%v\n", strconv.Itoa(value)))
 	if err != nil {
 		log.Fatal(err)

@@ -14,6 +14,7 @@ type Computer struct {
 	Position     int
 	InputStream  io.Reader
 	OutputStream io.Writer
+	RelativeBase int
 }
 
 type Instruction struct {
@@ -26,7 +27,7 @@ func (c *Computer) Execute() int {
 		instruction := intToInstruction(c.Inputs[c.Position])
 
 		if instruction.opcode == 99 {
-			return 99
+			return c.Inputs[0]
 		}
 
 		if instruction.opcode == 1 {
@@ -34,10 +35,9 @@ func (c *Computer) Execute() int {
 		} else if instruction.opcode == 2 {
 			c.Multiply(instruction)
 		} else if instruction.opcode == 3 {
-			c.Input()
+			c.Input(instruction)
 		} else if instruction.opcode == 4 {
 			c.Output(instruction)
-			return 0
 		} else if instruction.opcode == 5 {
 			c.JumpIfTrue(instruction)
 		} else if instruction.opcode == 6 {
@@ -46,6 +46,8 @@ func (c *Computer) Execute() int {
 			c.LessThan(instruction)
 		} else if instruction.opcode == 8 {
 			c.Equals(instruction)
+		} else if instruction.opcode == 9 {
+			c.AdjustRelativeBase(instruction)
 		} else {
 			log.Fatalf("Don't know what to do with opcode %v\n", instruction.opcode)
 		}
@@ -57,25 +59,25 @@ func (c *Computer) Execute() int {
 func (c *Computer) Add(instruction Instruction) {
 	val1 := c.findValue(instruction, c.Inputs[c.Position+1], 0)
 	val2 := c.findValue(instruction, c.Inputs[c.Position+2], 1)
-	dest := c.Inputs[c.Position+3]
+	dest := c.findPositional(instruction, c.Inputs[c.Position+3], 2)
 
-	c.Inputs[dest] = val1 + val2
+	c.setVal(val1+val2, dest)
 	c.Position += 4
 }
 
 func (c *Computer) Multiply(instruction Instruction) {
 	val1 := c.findValue(instruction, c.Inputs[c.Position+1], 0)
 	val2 := c.findValue(instruction, c.Inputs[c.Position+2], 1)
-	dest := c.Inputs[c.Position+3]
+	dest := c.findPositional(instruction, c.Inputs[c.Position+3], 2)
 
-	c.Inputs[dest] = val1 * val2
+	c.setVal(val1*val2, dest)
 	c.Position += 4
 }
 
-func (c *Computer) Input() {
-	dest := c.Inputs[c.Position+1]
+func (c *Computer) Input(instruction Instruction) {
+	dest := c.findPositional(instruction, c.Inputs[c.Position+1], 0)
 
-	// fmt.Print("Waiting for input: ")
+	fmt.Print("Waiting for input: ")
 	reader := bufio.NewReader(c.InputStream)
 	stringInput, err := reader.ReadString('\n')
 	if err != nil {
@@ -90,15 +92,12 @@ func (c *Computer) Input() {
 		log.Fatal(err)
 	}
 
-	// fmt.Printf("Got input %v\n", input)
-
-	c.Inputs[dest] = input
+	c.setVal(input, dest)
 	c.Position += 2
 }
 
 func (c *Computer) Output(instruction Instruction) {
 	value := c.findValue(instruction, c.Inputs[c.Position+1], 0)
-	// fmt.Printf("Outputing %v\n", value)
 	_, err := io.WriteString(c.OutputStream, fmt.Sprintf("%v\n", strconv.Itoa(value)))
 	if err != nil {
 		log.Fatal(err)
@@ -132,12 +131,12 @@ func (c *Computer) JumpIfFalse(instruction Instruction) {
 func (c *Computer) LessThan(instruction Instruction) {
 	val1 := c.findValue(instruction, c.Inputs[c.Position+1], 0)
 	val2 := c.findValue(instruction, c.Inputs[c.Position+2], 1)
-	dest := c.Inputs[c.Position+3]
+	dest := c.findPositional(instruction, c.Inputs[c.Position+3], 2)
 
 	if val1 < val2 {
-		c.Inputs[dest] = 1
+		c.setVal(1, dest)
 	} else {
-		c.Inputs[dest] = 0
+		c.setVal(0, dest)
 	}
 
 	c.Position += 4
@@ -146,23 +145,66 @@ func (c *Computer) LessThan(instruction Instruction) {
 func (c *Computer) Equals(instruction Instruction) {
 	val1 := c.findValue(instruction, c.Inputs[c.Position+1], 0)
 	val2 := c.findValue(instruction, c.Inputs[c.Position+2], 1)
-	dest := c.Inputs[c.Position+3]
+	dest := c.findPositional(instruction, c.Inputs[c.Position+3], 2)
 
 	if val1 == val2 {
-		c.Inputs[dest] = 1
+		c.setVal(1, dest)
 	} else {
-		c.Inputs[dest] = 0
+		c.setVal(0, dest)
 	}
 
 	c.Position += 4
 }
 
+func (c *Computer) AdjustRelativeBase(instruction Instruction) {
+	val1 := c.findValue(instruction, c.Inputs[c.Position+1], 0)
+
+	c.RelativeBase += val1
+	c.Position += 2
+}
+
 func (c *Computer) findValue(instruction Instruction, parameter int, parameterIndex int) int {
-	if len(instruction.parameterModes) > parameterIndex && instruction.parameterModes[parameterIndex] == 1 {
-		return parameter
-	} else {
-		return c.Inputs[parameter]
+	if len(instruction.parameterModes) > parameterIndex {
+		if instruction.parameterModes[parameterIndex] == 1 {
+			return parameter
+		} else if instruction.parameterModes[parameterIndex] == 2 {
+			return c.getVal(parameter + c.RelativeBase)
+		}
 	}
+
+	return c.getVal(parameter)
+}
+
+func (c *Computer) findPositional(instruction Instruction, parameter int, parameterIndex int) int {
+	if len(instruction.parameterModes) > parameterIndex {
+		if instruction.parameterModes[parameterIndex] == 2 {
+			return parameter + c.RelativeBase
+		}
+	}
+
+	return parameter
+}
+
+func (c *Computer) setVal(val, index int) {
+	if len(c.Inputs) <= index {
+		length := len(c.Inputs)
+		for i := 0; i < (index - length + 1); i++ {
+			c.Inputs = append(c.Inputs, 0)
+		}
+	}
+
+	c.Inputs[index] = val
+}
+
+func (c *Computer) getVal(index int) int {
+	if len(c.Inputs) <= index {
+		length := len(c.Inputs)
+		for i := 0; i < (index - length + 1); i++ {
+			c.Inputs = append(c.Inputs, 0)
+		}
+	}
+
+	return c.Inputs[index]
 }
 
 func intToInstruction(integer int) Instruction {

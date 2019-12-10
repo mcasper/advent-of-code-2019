@@ -1,11 +1,12 @@
 package shared
 
 import (
+	"os"
 	"testing"
 )
 
 func TestAdd(t *testing.T) {
-	computer := Computer{Inputs: []int{1, 0, 0, 0, 99}, Position: 0}
+	computer := Computer{Inputs: []int{1, 0, 0, 0, 99}, Position: 0, RelativeBase: 0, InputStream: os.Stdin, OutputStream: os.Stdout}
 	result := computer.Execute()
 
 	if result != 2 {
@@ -18,7 +19,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestAddWithParameterGroups(t *testing.T) {
-	computer := Computer{Inputs: []int{1101, 50, 50, 0, 99}, Position: 0}
+	computer := Computer{Inputs: []int{1101, 50, 50, 0, 99}, Position: 0, RelativeBase: 0, InputStream: os.Stdin, OutputStream: os.Stdout}
 	result := computer.Execute()
 
 	if result != 100 {
@@ -31,7 +32,7 @@ func TestAddWithParameterGroups(t *testing.T) {
 }
 
 func TestMultiply(t *testing.T) {
-	computer := Computer{Inputs: []int{2, 0, 0, 0, 99}, Position: 0}
+	computer := Computer{Inputs: []int{2, 0, 0, 0, 99}, Position: 0, RelativeBase: 0, InputStream: os.Stdin, OutputStream: os.Stdout}
 	result := computer.Execute()
 
 	if result != 4 {
@@ -44,7 +45,7 @@ func TestMultiply(t *testing.T) {
 }
 
 func TestMultiplyWithParameterGroups(t *testing.T) {
-	computer := Computer{Inputs: []int{1102, 50, 50, 0, 99}, Position: 0}
+	computer := Computer{Inputs: []int{1102, 50, 50, 0, 99}, Position: 0, RelativeBase: 0, InputStream: os.Stdin, OutputStream: os.Stdout}
 	result := computer.Execute()
 
 	if result != 2500 {
@@ -57,12 +58,22 @@ func TestMultiplyWithParameterGroups(t *testing.T) {
 }
 
 func TestComplexInstructions(t *testing.T) {
-	computer := Computer{Inputs: []int{1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50}, Position: 0}
+	computer := Computer{Inputs: []int{1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50}, Position: 0, RelativeBase: 0, InputStream: os.Stdin, OutputStream: os.Stdout}
 	expected := 3500
 	result := computer.Execute()
 
 	if result != expected {
 		t.Errorf("Expected %v as Execute result, got %v", expected, result)
+	}
+}
+
+func TestAdjustRelativeBase(t *testing.T) {
+	computer := Computer{Inputs: []int{109, 5, 109, 20, 99}, Position: 0, RelativeBase: 0, InputStream: os.Stdin, OutputStream: os.Stdout}
+	expected := 25
+	computer.Execute()
+
+	if computer.RelativeBase != expected {
+		t.Errorf("Expected %v as Execute result, got %v", expected, computer.RelativeBase)
 	}
 }
 

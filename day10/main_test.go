@@ -171,3 +171,14 @@ func TestAsteroidBlocksLOS(t *testing.T) {
 		t.Errorf("Expected %v, got %v\n", expected, result)
 	}
 }
+
+func TestAngle(t *testing.T) {
+	sourceAsteroid := Asteroid{x: 2, y: 2}
+	destAsteroid := Asteroid{x: 2, y: 1}
+	expected := 0.0
+	result := angle(sourceAsteroid, destAsteroid)
+
+	if result != expected {
+		t.Errorf("Expected %v, got %v\n", expected, result)
+	}
+}

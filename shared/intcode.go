@@ -27,7 +27,7 @@ func (c *Computer) Execute() int {
 		instruction := intToInstruction(c.Inputs[c.Position])
 
 		if instruction.opcode == 99 {
-			return c.Inputs[0]
+			return 99
 		}
 
 		if instruction.opcode == 1 {
@@ -35,7 +35,10 @@ func (c *Computer) Execute() int {
 		} else if instruction.opcode == 2 {
 			c.Multiply(instruction)
 		} else if instruction.opcode == 3 {
-			c.Input(instruction)
+			foundInput := c.Input(instruction)
+			if !foundInput {
+				return 0
+			}
 		} else if instruction.opcode == 4 {
 			c.Output(instruction)
 		} else if instruction.opcode == 5 {
@@ -74,13 +77,14 @@ func (c *Computer) Multiply(instruction Instruction) {
 	c.Position += 4
 }
 
-func (c *Computer) Input(instruction Instruction) {
+func (c *Computer) Input(instruction Instruction) bool {
 	dest := c.findPositional(instruction, c.Inputs[c.Position+1], 0)
 
-	fmt.Print("Waiting for input: ")
+	// fmt.Print("Waiting for input: ")
 	reader := bufio.NewReader(c.InputStream)
 	stringInput, err := reader.ReadString('\n')
 	if err != nil {
+		return false
 		log.Fatal(err)
 	}
 	stringInput = strings.TrimSuffix(stringInput, "\n")
@@ -94,6 +98,7 @@ func (c *Computer) Input(instruction Instruction) {
 
 	c.setVal(input, dest)
 	c.Position += 2
+	return true
 }
 
 func (c *Computer) Output(instruction Instruction) {

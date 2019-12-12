@@ -64,6 +64,14 @@ type Point struct {
 	color int
 }
 
+func (p Point) ColorToString() string {
+	if p.color == 0 {
+		return "."
+	} else {
+		return "#"
+	}
+}
+
 func main() {
 	input, err := ioutil.ReadFile("part1.txt")
 	split := strings.Split(strings.Trim(string(input), "\n"), ",")
@@ -87,7 +95,7 @@ func main() {
 	reader := bufio.NewReader(&outputStream)
 	var grid []Point
 
-	inputStream.WriteString("0\n")
+	inputStream.WriteString("1\n")
 
 	computer := shared.Computer{Inputs: ints, Position: 0, RelativeBase: 0, InputStream: &inputStream, OutputStream: &outputStream}
 
@@ -128,6 +136,7 @@ func main() {
 	}
 
 	fmt.Printf("Part 1 result: %v\n", len(grid))
+	displayGrid(grid)
 }
 
 func readOutput(reader *bufio.Reader) int {
@@ -141,4 +150,60 @@ func readOutput(reader *bufio.Reader) int {
 		log.Fatal(err)
 	}
 	return i
+}
+
+func displayGrid(grid []Point) {
+	var (
+		min int
+		max int
+	)
+
+	for _, point := range grid {
+		if point.x < min {
+			min = point.x
+		}
+
+		if point.x > max {
+			max = point.x
+		}
+
+		if point.y < min {
+			min = point.y
+		}
+
+		if point.y > max {
+			max = point.y
+		}
+	}
+
+	fmt.Printf("Min is %v, max is %v\n", min, max)
+
+	output := [][]string{}
+	for y := max; y >= min; y-- {
+		row := []string{}
+
+		for x := min; x <= max; x++ {
+			existingPoint := false
+			for _, point := range grid {
+				if existingPoint {
+					continue
+				}
+
+				if point.x == x && point.y == y {
+					row = append(row, point.ColorToString())
+					existingPoint = true
+				}
+			}
+
+			if !existingPoint {
+				row = append(row, ".")
+			}
+		}
+
+		output = append(output, row)
+	}
+
+	for _, line := range output {
+		fmt.Printf("%v\n", strings.Join(line, ""))
+	}
 }

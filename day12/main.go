@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Moon struct {
@@ -23,12 +23,18 @@ func (m *Moon) applyVelocity() {
 	m.z = m.z + m.velocity.z
 }
 
-func (m Moon) totalEnergy() int {
-	return (m.Abs(m.x) + m.Abs(m.y) + m.Abs(m.z)) * (m.Abs(m.velocity.x) + m.Abs(m.velocity.y) + m.Abs(m.velocity.z))
+func (m Moon) Id() string {
+	return fmt.Sprintf("%v|%v|%v|%v|%v|%v", m.x, m.y, m.z, m.velocity.x, m.velocity.y, m.velocity.z)
 }
 
-func (m Moon) Abs(x int) int {
-	return int(math.Abs(float64(x)))
+func (m Moon) Dimension(i int) int {
+	if i == 0 {
+		return m.x
+	} else if i == 1 {
+		return m.y
+	} else {
+		return m.z
+	}
 }
 
 func moonFromString(str string) Moon {
@@ -84,31 +90,83 @@ func main() {
 	pairs := moonsToPairs(moons)
 	timeStep := 0
 
+	start := time.Now().Unix()
+
+	xPeriod := 0
+	xHashes := make(map[string]int)
+	xT := 0
+	yPeriod := 0
+	yHashes := make(map[string]int)
+	yT := 0
+	zPeriod := 0
+	zHashes := make(map[string]int)
+	zT := 0
+
 	for {
 		for _, pair := range pairs {
 			applyGravity(&moons[pair[0]], &moons[pair[1]])
 		}
-		for i, _ := range moons {
+		for i := range moons {
 			moons[i].applyVelocity()
 		}
-		timeStep++
 
-		if timeStep == 1000 {
+		if xPeriod == 0 {
+			if val, ok := xHashes[dimensionHash(moons, 0)]; ok {
+				if timeStep-val == 1 {
+					if xT > 0 {
+						fmt.Println("Found x period!")
+						xPeriod = timeStep - xT
+					} else {
+						xT = timeStep - xT
+					}
+				}
+			} else {
+				xHashes[dimensionHash(moons, 0)] = timeStep
+			}
+		}
+
+		if yPeriod == 0 {
+			if val, ok := yHashes[dimensionHash(moons, 1)]; ok {
+				if timeStep-val == 1 {
+					if yT > 0 {
+						fmt.Println("Found y period!")
+						yPeriod = timeStep - yT
+					} else {
+						yT = timeStep - yT
+					}
+				}
+			} else {
+				yHashes[dimensionHash(moons, 1)] = timeStep
+			}
+		}
+
+		if zPeriod == 0 {
+			if val, ok := zHashes[dimensionHash(moons, 2)]; ok {
+				if timeStep-val == 1 {
+					if zT > 0 {
+						fmt.Println("Found z period!")
+						zPeriod = timeStep - zT
+					} else {
+						zT = timeStep - zT
+					}
+				}
+			} else {
+				zHashes[dimensionHash(moons, 2)] = timeStep
+			}
+		}
+
+		if xPeriod != 0 && yPeriod != 0 && zPeriod != 0 {
+			fmt.Printf("%v, %v, %v\n", xPeriod, yPeriod, zPeriod)
+			fmt.Printf("%v\n", LCM(xPeriod, yPeriod, zPeriod)*2)
 			break
 		}
+
+		if timeStep%1_000_000 == 0 {
+			fmt.Printf("[%vs] On time step %v\n", time.Now().Unix()-start, timeStep)
+		}
+
+		timeStep++
 	}
-
-	totalEnergy := calculateTotalEnergy(moons)
-
-	fmt.Printf("Part 1 result: %v\n", totalEnergy)
-}
-
-func calculateTotalEnergy(moons []Moon) int {
-	result := 0
-	for _, moon := range moons {
-		result += moon.totalEnergy()
-	}
-	return result
 }
 
 func applyGravity(moon1, moon2 *Moon) {
@@ -150,5 +208,29 @@ func moonsToPairs(moons []Moon) [][]int {
 			result = append(result, []int{i1, i2})
 		}
 	}
+	return result
+}
+
+func dimensionHash(moons []Moon, dim int) string {
+	return fmt.Sprintf("%v|%v|%v|%v", moons[0].Dimension(dim), moons[1].Dimension(dim), moons[2].Dimension(dim), moons[3].Dimension(dim))
+}
+
+func GCD(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+	return a
+}
+
+// find Least Common Multiple (LCM) via GCD
+func LCM(a, b int, integers ...int) int {
+	result := a * b / GCD(a, b)
+
+	for i := 0; i < len(integers); i++ {
+		result = LCM(result, integers[i])
+	}
+
 	return result
 }

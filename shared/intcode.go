@@ -55,8 +55,6 @@ func (c *Computer) Execute() int {
 			log.Fatalf("Don't know what to do with opcode %v\n", instruction.opcode)
 		}
 	}
-
-	return c.Inputs[0]
 }
 
 func (c *Computer) Add(instruction Instruction) {
@@ -80,12 +78,11 @@ func (c *Computer) Multiply(instruction Instruction) {
 func (c *Computer) Input(instruction Instruction) bool {
 	dest := c.findPositional(instruction, c.Inputs[c.Position+1], 0)
 
-	// fmt.Print("Waiting for input: ")
+	fmt.Print("Waiting for input: ")
 	reader := bufio.NewReader(c.InputStream)
 	stringInput, err := reader.ReadString('\n')
 	if err != nil {
 		return false
-		log.Fatal(err)
 	}
 	stringInput = strings.TrimSuffix(stringInput, "\n")
 	c.InputStream = reader

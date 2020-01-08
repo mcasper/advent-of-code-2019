@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mcasper/advent-of-code-2019/shared"
 )
@@ -14,13 +14,28 @@ import (
 type Screen struct {
 	pixels            [][]string
 	outputInstruction []int
+	score             int
 }
 
 func (s Screen) Print() {
+	fmt.Println("\033[2J")
+
 	for _, line := range s.pixels {
 		fmt.Printf("%v\n", strings.Join(line, ""))
 	}
-	fmt.Println("\n\n\n")
+	time.Sleep(10 * time.Millisecond)
+	fmt.Print("\n\n\n\n")
+}
+
+func (s Screen) FindCoord(tile string) []int {
+	for y, line := range s.pixels {
+		for x, pixel := range line {
+			if pixel == tile {
+				return []int{x, y}
+			}
+		}
+	}
+	return []int{}
 }
 
 func (s Screen) CountBlocks() int {
@@ -33,6 +48,25 @@ func (s Screen) CountBlocks() int {
 		}
 	}
 	return result
+}
+
+func (s *Screen) Read(p []byte) (n int, err error) {
+	paddleCoords := s.FindCoord("_")
+	ballCoords := s.FindCoord("*")
+
+	var input string
+	if ballCoords[0] < paddleCoords[0] {
+		input = "-1\n"
+	} else if ballCoords[0] == paddleCoords[0] {
+		input = "0\n"
+	} else {
+		input = "1\n"
+	}
+
+	for i, char := range input {
+		p[i] = byte(char)
+	}
+	return len(input), nil
 }
 
 func (s *Screen) Write(p []byte) (n int, err error) {
@@ -50,27 +84,37 @@ func (s *Screen) Write(p []byte) (n int, err error) {
 		y := s.outputInstruction[1]
 		tileId := s.outputInstruction[2]
 
-		switch tileId {
-		case 0:
-			s.WritePixel(y, x, " ")
-		case 1:
-			s.WritePixel(y, x, "|")
-		case 2:
-			s.WritePixel(y, x, "X")
-		case 3:
-			s.WritePixel(y, x, "_")
-		case 4:
-			s.WritePixel(y, x, "*")
+		if x == -1 && y == 0 {
+			fmt.Printf("Score is %v\n\n\n\n", tileId)
+			s.score = tileId
+		} else {
+			var newStuff bool
+
+			switch tileId {
+			case 0:
+				newStuff = s.WritePixel(y, x, " ")
+			case 1:
+				newStuff = s.WritePixel(y, x, "|")
+			case 2:
+				newStuff = s.WritePixel(y, x, "X")
+			case 3:
+				newStuff = s.WritePixel(y, x, "_")
+			case 4:
+				newStuff = s.WritePixel(y, x, "*")
+			}
+
+			if newStuff {
+				s.Print()
+			}
 		}
 
 		s.outputInstruction = []int{}
-		s.Print()
 	}
 
 	return len(p), nil
 }
 
-func (s *Screen) WritePixel(y int, x int, pixel string) {
+func (s *Screen) WritePixel(y int, x int, pixel string) bool {
 	if len(s.pixels) <= y {
 		length := len(s.pixels)
 		for i := 0; i < (y - length + 1); i++ {
@@ -85,7 +129,13 @@ func (s *Screen) WritePixel(y int, x int, pixel string) {
 		}
 	}
 
-	s.pixels[y][x] = pixel
+	if s.pixels[y][x] == pixel {
+		s.pixels[y][x] = pixel
+		return false
+	} else {
+		s.pixels[y][x] = pixel
+		return true
+	}
 }
 
 func main() {
@@ -106,11 +156,12 @@ func main() {
 		ints = append(ints, integer)
 	}
 
-	screen := Screen{pixels: [][]string{}, outputInstruction: []int{}}
+	screen := Screen{pixels: [][]string{}, outputInstruction: []int{}, score: 0}
 
-	computer := shared.Computer{Inputs: ints, Position: 0, RelativeBase: 0, InputStream: os.Stdin, OutputStream: &screen}
+	computer := shared.Computer{Inputs: ints, Position: 0, RelativeBase: 0, InputStream: &screen, OutputStream: &screen}
 
 	computer.Execute()
 
 	fmt.Printf("Part 1 result: %v\n", screen.CountBlocks())
+	fmt.Printf("Part 2 result: %v\n", screen.score)
 }
